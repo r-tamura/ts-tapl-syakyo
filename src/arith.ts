@@ -54,10 +54,10 @@ export function typecheck(t: Term): Type {
             return { tag: "Number" };
         }
         case "if": {
-            const cond = typecheck(t.cond);
-            if (cond.tag !== "Boolean") {
-                throw new TypeError("boolean expected");
-            }
+            // 第2章 演習問題
+            // if文の条件式には任意の型が利用できるが、型チェックは行われる
+            // if (1 + true) のような場合は型エラーを発生させる
+            const _cond = typecheck(t.cond);
             const then = typecheck(t.thn);
             const elseTerm = typecheck(t.els);
             if (then.tag !== elseTerm.tag) {
