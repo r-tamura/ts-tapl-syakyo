@@ -1,3 +1,5 @@
+import { parseArith } from "tiny-ts-parser";
+
 export type Type =
     | { tag: "Boolean" }
     | { tag: "Number" };
@@ -66,4 +68,8 @@ export function typecheck(t: Term): Type {
         default:
             throw new Error(`Invalid term type: ${t satisfies never}`);
     }
+}
+
+if (import.meta.main) {
+    typecheck(parseArith("42 + 1"));
 }
