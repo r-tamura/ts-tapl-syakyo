@@ -1,7 +1,7 @@
 /**
  * 第3章 関数型
  */
-import { parseBasic } from "tiny-ts-parser";
+import { error, parseBasic } from "tiny-ts-parser";
 
 export type Type =
     | { tag: "Boolean" }
@@ -26,45 +26,6 @@ export function fn(
 ): Type {
     return { tag: "Func", params, retType };
 }
-
-class UnknownVariableError extends Error {
-    static {
-        this.prototype.name = "UnknownVariableError";
-    }
-}
-
-/*
- * Note: TypeScript以外の言語では引数名はないのが一般的だが、TypeScriptでは引数名を省略できないので、引数名を持たせる
- */
-export type Param = { name: string; type: Type };
-
-type Term =
-    | { tag: "true" }
-    | { tag: "false" }
-    | { tag: "if"; cond: Term; thn: Term; els: Term }
-    | { tag: "number"; n: number }
-    | { tag: "add"; left: Term; right: Term }
-    | { tag: "var"; name: string }
-    | { tag: "func"; params: Param[]; body: Term }
-    | { tag: "call"; func: Term; args: Term[] }
-    /*
-        例: `1; 2; 3;`の場合
-        ```
-       {
-         tag: "seq",
-         body: { tag: "number", n: 1 },
-         rest: {
-            tag: "seq",
-            body: { tag: "number", n: 2 },
-            rest: { tag: "number", n: 3 }
-        }
-       }
-        ```
-    */
-    | { tag: "seq"; body: Term; rest: Term }
-    // 例: `const x = 1; x;`の場合
-    // > { tag: "const"; name: "x"; init: { tag: "number", n: 1 }; rest: { tag: "number", n: 1 } };
-    | { tag: "const"; name: string; init: Term; rest: Term };
 
 function typeEq(type1: Type, type2: Type): boolean {
     switch (type2.tag) {
@@ -123,6 +84,39 @@ const TypeEnv = {
     },
 };
 
+/*
+ * Note: TypeScript以外の言語では引数名はないのが一般的だが、TypeScriptでは引数名を省略できないので、引数名を持たせる
+ */
+export type Param = { name: string; type: Type };
+
+type Term =
+    | { tag: "true" }
+    | { tag: "false" }
+    | { tag: "if"; cond: Term; thn: Term; els: Term }
+    | { tag: "number"; n: number }
+    | { tag: "add"; left: Term; right: Term }
+    | { tag: "var"; name: string }
+    | { tag: "func"; params: Param[]; body: Term }
+    | { tag: "call"; func: Term; args: Term[] }
+    /*
+        例: `1; 2; 3;`の場合
+        ```
+       {
+         tag: "seq",
+         body: { tag: "number", n: 1 },
+         rest: {
+            tag: "seq",
+            body: { tag: "number", n: 2 },
+            rest: { tag: "number", n: 3 }
+        }
+       }
+        ```
+    */
+    | { tag: "seq"; body: Term; rest: Term }
+    // 例: `const x = 1; x;`の場合
+    // > { tag: "const"; name: "x"; init: { tag: "number", n: 1 }; rest: { tag: "number", n: 1 } };
+    | { tag: "const"; name: string; init: Term; rest: Term };
+
 /**
  * 項(型を判定します
  * @param t 項
@@ -157,11 +151,11 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
         case "add": {
             const left = typecheck(t.left, typeEnv);
             if (left.tag !== "Number") {
-                throw new TypeError("number expected");
+                throw error("number expected", t.left);
             }
             const right = typecheck(t.right, typeEnv);
             if (right.tag !== "Number") {
-                throw new TypeError("number expected");
+                throw error("number expected", t.right);
             }
             return { tag: "Number" };
         }
@@ -173,13 +167,13 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
             const then = typecheck(t.thn, typeEnv);
             const elseTerm = typecheck(t.els, typeEnv);
             if (then.tag !== elseTerm.tag) {
-                throw new TypeError("branches must have the same type");
+                throw error("branches must have the same type", t);
             }
             return then;
         }
         case "var": {
             if (!(t.name in typeEnv)) {
-                throw new UnknownVariableError(`Unknown variable: ${t.name}`);
+                throw error(`Unknown variable: ${t.name}`, t);
             }
             return typeEnv[t.name];
         }
@@ -194,15 +188,15 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
         case "call": {
             const funcType = typecheck(t.func, typeEnv);
             if (funcType.tag !== "Func") {
-                throw new TypeError("function expected");
+                throw error("function expected", t.func);
             }
             if (t.args.length !== funcType.params.length) {
-                throw new TypeError("wrong number of arguments");
+                throw error("wrong number of arguments", t);
             }
             for (let i = 0; i < t.args.length; i++) {
                 const argType = typecheck(t.args[i], typeEnv);
                 if (!typeEq(argType, funcType.params[i].type)) {
-                    throw new TypeError("argument type mismatch");
+                    throw error("argument type mismatch", t.args[i]);
                 }
             }
             return funcType.retType;
@@ -217,7 +211,7 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
             return typecheck(t.rest, newTypeEnv);
         }
         default:
-            throw new Error(`Invalid term type: ${t satisfies never}`);
+            throw error(`Invalid term type: ${t satisfies never}`, t);
     }
 }
 
