@@ -14,4 +14,7 @@
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },
+    "github.copilot.enable": {
+        "*": false
+    },
 }
