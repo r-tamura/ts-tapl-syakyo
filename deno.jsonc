@@ -8,8 +8,8 @@
     },
     "tasks": {
         "test": {
-            "command": "deno test src --watch --doc --allow-sys --allow-env",
-            "desc": "Run tests"
+            "command": "deno test --watch --doc --allow-sys --allow-env src",
+            "desc": "Run tests and watch for changes"
         }
 
     },

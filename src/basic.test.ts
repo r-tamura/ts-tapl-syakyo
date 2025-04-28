@@ -55,3 +55,22 @@ describe("funcion", () => {
     test("定義された関数と呼び出し時のパラメータの数が異なる場合、型エラーが発生する", () =>
         ng("((x: number) => 42)(1, 2, 3)", /wrong number of arguments/));
 });
+
+describe("seq/const", () => {
+    test("定義された変数が参照された場合、定義された変数の型と判定される", () => strictOk("const x = 42; x", number()));
+    test("同じ変数が定義された場合、後に定義された変数の型と判定される(TypeScriptとは異なる)", () =>
+        strictOk("const x = 42; const x = true; x", { tag: "Boolean" }));
+    test("定義された関数が参照された場合、定義された関数の型と判定される", () =>
+        strictOk(
+            `
+            const add = (x: number, y: number) => x + y;
+            const select = (b: boolean, x: number, y: number) => b ? x : y;
+
+            const x = add(1, add(2, 3));
+            const y = select(true, x, x);
+
+            y;
+        `,
+            number(),
+        ));
+});

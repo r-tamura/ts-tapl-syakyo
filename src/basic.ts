@@ -47,7 +47,23 @@ type Term =
     | { tag: "var"; name: string }
     | { tag: "func"; params: Param[]; body: Term }
     | { tag: "call"; func: Term; args: Term[] }
+    /*
+        例: `1; 2; 3;`の場合
+        ```
+       {
+         tag: "seq",
+         body: { tag: "number", n: 1 },
+         rest: {
+            tag: "seq",
+            body: { tag: "number", n: 2 },
+            rest: { tag: "number", n: 3 }
+        }
+       }
+        ```
+    */
     | { tag: "seq"; body: Term; rest: Term }
+    // 例: `const x = 1; x;`の場合
+    // > { tag: "const"; name: "x"; init: { tag: "number", n: 1 }; rest: { tag: "number", n: 1 } };
     | { tag: "const"; name: string; init: Term; rest: Term };
 
 function typeEq(type1: Type, type2: Type): boolean {
@@ -86,6 +102,26 @@ function typeEq(type1: Type, type2: Type): boolean {
 
 /** 型環境 変数名と型の対応表 */
 type TypeEnv = Record<string, Type>;
+
+const TypeEnv = {
+    /**
+     * 型環境のコピーを作成します
+     * @returns
+     */
+    clone(typeEnv: TypeEnv): TypeEnv {
+        return { ...typeEnv };
+    },
+
+    /**
+     * 変数を定義した新しい型環境を返します
+     * @returns
+     */
+    define(typeEnv: TypeEnv, name: string, type: Type): TypeEnv {
+        const newTypeEnv = this.clone(typeEnv);
+        newTypeEnv[name] = type;
+        return newTypeEnv;
+    },
+};
 
 /**
  * 項(型を判定します
@@ -171,9 +207,14 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
             }
             return funcType.retType;
         }
-        case "seq":
+        case "seq": {
+            typecheck(t.body, typeEnv);
+            return typecheck(t.rest, typeEnv);
+        }
         case "const": {
-            throw new Error("not implemented");
+            const initType = typecheck(t.init, typeEnv);
+            const newTypeEnv = TypeEnv.define(typeEnv, t.name, initType);
+            return typecheck(t.rest, newTypeEnv);
         }
         default:
             throw new Error(`Invalid term type: ${t satisfies never}`);
