@@ -123,7 +123,7 @@ type Term =
     | { tag: "number"; n: number }
     | { tag: "add"; left: Term; right: Term }
     | { tag: "var"; name: string }
-    | { tag: "func"; params: Param[]; body: Term }
+    | { tag: "func"; params: Param[]; retType?: Type; body: Term }
     | { tag: "call"; func: Term; args: Term[] }
     /*
         例: `1; 2; 3;`の場合
@@ -211,6 +211,9 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
                 newTypeEnv[param.name] = param.type;
             }
             const retType = typecheck(t.body, newTypeEnv);
+            if (t.retType && !typeEq(t.retType, retType)) {
+                error("wrong return type", t);
+            }
             return { tag: "Func", params: t.params, retType };
         }
         case "call": {

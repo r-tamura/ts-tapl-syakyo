@@ -54,6 +54,9 @@ describe("funcion", () => {
     test("未定義引数を参照する場合、型エラーが発生する", () => ng("(x: number) => y", /Unknown variable: /));
     test("定義された関数と呼び出し時のパラメータの数が異なる場合、型エラーが発生する", () =>
         ng("((x: number) => 42)(1, 2, 3)", /wrong number of arguments/));
+
+    test("(演習問題): 無名関数の返り値の型と実装の型が合わないとき、型エラーが発生する", () =>
+        ng("(n: number): boolean => 42", /wrong return type/));
 });
 
 describe("seq/const", () => {
