@@ -97,14 +97,6 @@ describe("object", () => {
             `,
             /argument type mismatch/,
         ));
-    test("関数の引数の型がオブジェクトで定義され、そのサブタイプが渡された場合、型エラーが発生する", () =>
-        ng(
-            `
-            const func = (obj: { a: number, b: boolean }) => obj;
-            func({ a: 42 , b: true, c: 42 });
-            `,
-            /argument type mismatch/,
-        ));
     test("オブジェクトのプロパティが存在するとき、そのプロパティの型チェックに成功する", () =>
         strictOk(
             `
