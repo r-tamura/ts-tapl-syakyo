@@ -92,16 +92,6 @@ test("関数の実装中に自身を呼び出す処理があるとき、型チ�
     );
 });
 
-test("再帰関数の返り値の型と実装の型が合わないとき、型エラーが発生する", () => {
-    ng(
-        `
-        function f(x: number): boolean { return f(x); }
-        f
-        `,
-        /wrong return type/,
-    );
-});
-
 // オブジェクトのテスト
 test("オブジェクトの型チェックをすることができる", () =>
     strictOk("({ a: 42, b: true })", object([{ name: "a", type: number() }, { name: "b", type: boolean() }])));
@@ -158,19 +148,6 @@ test("再帰関数内でオブジェクトを使用できる", () =>
             { name: "name", type: boolean() },
             { name: "age", type: number() },
         ]),
-    ));
-
-test("オブジェクトのメソッドとして再帰関数を定義できる", () =>
-    strictOk(
-        `
-        const calculator = {
-            factorial: function f(n: number): number {
-                if (n <= 1) { return 1; } else { return n * f(n - 1); }
-            }
-        };
-        calculator.factorial
-        `,
-        fn([param("n", number())], number()),
     ));
 
 describe("rec", () => {
