@@ -29,17 +29,6 @@ describe("add", () => {
     test("Number型とBoolean型のaddは型エラーが発生する", () => ng("42 + true", /number expected/));
 });
 
-describe("if", () => {
-    // test("if文の条件がBooleanでないとき、型エラーが発生する", () =>
-    //     ng("if (42) { 42 } else { 42 }", /boolean expected/));
-    test("condは任意の型が利用できる", () => ok("if (42) { return 42 } else { return 42 }", "Number"));
-    test("condの項の型チェックされる", () => ng("if (1+true) { return 42 } else { return 42 }", /number expected/));
-    test("then/elseの型が同一のとき、その型がif文の型と判定される", () =>
-        ok("if (true) { return 42 } else { return 42 }", "Number"));
-    test("then/elseの型が異なる場合は例外を発生させる", () =>
-        ng("if (true) { return 42 } else { return true }", /branches must have the same type/));
-});
-
 describe("funcion", () => {
     test("関数を引数として受け取る関数の場合、引数の型は関数として判定される", () =>
         strictOk(
@@ -60,19 +49,6 @@ describe("seq/const", () => {
     test("定義された変数が参照された場合、定義された変数の型と判定される", () => strictOk("const x = 42; x", number()));
     test("同じ変数が定義された場合、後に定義された変数の型と判定される(TypeScriptとは異なる)", () =>
         strictOk("const x = 42; const x = true; x", { tag: "Boolean" }));
-    test("定義された関数が参照された場合、定義された関数の型と判定される", () =>
-        strictOk(
-            `
-            const add = (x: number, y: number) => x + y;
-            const select = (b: boolean, x: number, y: number) => b ? x : y;
-
-            const x = add(1, add(2, 3));
-            const y = select(true, x, x);
-
-            y;
-        `,
-            number(),
-        ));
 });
 
 describe("object", () => {

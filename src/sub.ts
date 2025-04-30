@@ -316,7 +316,7 @@ export function typecheck(t: Term, typeEnv: TypeEnv): Type {
 
 if (import.meta.main) {
     const code = `
-    const f = (x: { foo: number, baz: boolean }) => x.foo;
+    const f = (x: { foo: number, bar: boolean }) => x.foo;
     const x = { foo: 1, bar: true };
     f(x);
     `;
