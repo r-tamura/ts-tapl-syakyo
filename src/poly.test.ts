@@ -198,4 +198,33 @@ describe("poly", () => {
             );
         });
     });
+
+    describe("変数捕獲", () => {
+        test("外側の型変数を内側で利用できる", () => {
+            const inner = typeAbs(
+                ["U@1"],
+                fn(
+                    [param("x", typeVar("U")), param("y", typeVar("U@1"))],
+                    boolean(),
+                ),
+            );
+            strictOk(
+                `
+                const foo = <T>(arg1: T, arg2:<U>(x: T, y: U) => boolean) => true
+                const bar = <U>() => foo<U>;
+                bar;
+                `,
+                typeAbs(
+                    ["U"],
+                    fn(
+                        [],
+                        fn(
+                            [param("arg1", typeVar("U")), param("arg2", inner)],
+                            boolean(),
+                        ),
+                    ),
+                ),
+            );
+        });
+    });
 });

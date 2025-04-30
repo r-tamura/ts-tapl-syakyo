@@ -3,11 +3,13 @@
  */
 import { error, parsePoly } from "tiny-ts-parser";
 
+type TypeAbs = { tag: "TypeAbs"; typeParams: string[]; type: Type };
+
 export type Type =
     | { tag: "Boolean" }
     | { tag: "Number" }
     | { tag: "Func"; params: Param[]; retType: Type }
-    | { tag: "TypeAbs"; typeParams: string[]; type: Type }
+    | TypeAbs
     | { tag: "TypeVar"; name: string };
 
 export function boolean(): Type {
@@ -32,7 +34,7 @@ export function fn(
 export function typeAbs(
     typeParamNames: string[],
     type: Type,
-): Type {
+): TypeAbs {
     return {
         tag: "TypeAbs",
         typeParams: typeParamNames,
@@ -42,6 +44,27 @@ export function typeAbs(
 
 export function typeVar(name: string): Type {
     return { tag: "TypeVar", name };
+}
+
+function* genUniqueId() {
+    let i = 1;
+    while (true) {
+        yield i;
+        i++;
+    }
+}
+
+const uniqueTypeIdIter = genUniqueId();
+
+function uniqifyTypeVarName(typeParams: string[], type: Type): TypeAbs {
+    let newType = type;
+    const newTypeParams = [];
+    for (const typeVarName of typeParams) {
+        const uniqueTypeVarName = `${typeVarName}@${uniqueTypeIdIter.next().value}`;
+        newType = substitute(type, typeVarName, typeVar(uniqueTypeVarName));
+        newTypeParams.push(uniqueTypeVarName);
+    }
+    return typeAbs(newTypeParams, newType);
 }
 
 /**
@@ -71,9 +94,10 @@ export function substitute(targetType: Type, typeVarName: string, concreteType: 
             if (targetType.typeParams.includes(typeVarName)) {
                 return targetType;
             }
-
-            const substitutedType = substitute(targetType.type, typeVarName, concreteType);
-            return typeAbs(targetType.typeParams, substitutedType);
+            // 変数捕縛の問題対応
+            const uniqueTypeAbs = uniqifyTypeVarName(targetType.typeParams, targetType.type);
+            const substitutedType = substitute(uniqueTypeAbs.type, typeVarName, concreteType);
+            return typeAbs(uniqueTypeAbs.typeParams, substitutedType);
         }
         case "TypeVar": {
             return targetType.name === typeVarName ? concreteType : targetType;
@@ -333,5 +357,12 @@ export function typecheck(t: Term, typeEnv: TypeEnv, typeVarNames: string[]): Ty
 }
 
 if (import.meta.main) {
-    typecheck(parsePoly("42 + 1"), {}, []);
+    const t = typecheck(
+        parsePoly(
+            "const f = <U>() => (x: U, y: <S>(s: S) => number) => x; f;",
+        ),
+        {},
+        [],
+    );
+    console.dir(t, { depth: null });
 }
