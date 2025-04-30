@@ -1,0 +1,41 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "request": "launch",
+      "name": "Deno run",
+      "type": "node",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "runtimeExecutable": "/usr/local/bin/deno",
+      "runtimeArgs": [
+        "run",
+        "--inspect-wait",
+        "--allow-all"
+      ],
+      "attachSimplePort": 9229
+    },
+    // https://stackoverflow.com/a/73523052/6253973
+    // https://stackoverflow.com/questions/78425086/can-the-debug-console-show-test-api-results
+    {
+      "request": "launch",
+      "name": "Deno Test",
+      "type": "node",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": [
+        "test",
+        "--inspect-brk",
+        "-A",
+        // "src"
+        "${file}" // 1ファイルのテストでないとブレークポイントが張れない
+      ],
+      "attachSimplePort": 9229,
+      "outputCapture": "std" // deno testコマンドの出力をデバッグコンソールに表示
+    }
+  ]
+}
