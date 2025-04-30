@@ -174,4 +174,28 @@ describe("poly", () => {
                 ));
         });
     });
+
+    describe("shadowing", () => {
+        test("shadowing", () => {
+            strictOk(
+                `
+        const foo = <T>(arg1: T, arg2: <T>(x: T) => boolean) => true;
+        foo<number>
+        `,
+                fn(
+                    [
+                        param("arg1", number()),
+                        param(
+                            "arg2",
+                            typeAbs(
+                                ["T"],
+                                fn([param("x", typeVar("T"))], boolean()),
+                            ),
+                        ),
+                    ],
+                    boolean(),
+                ),
+            );
+        });
+    });
 });

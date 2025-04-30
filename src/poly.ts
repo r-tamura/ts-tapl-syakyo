@@ -66,6 +66,12 @@ export function substitute(targetType: Type, typeVarName: string, concreteType: 
             return fn(params, retType);
         }
         case "TypeAbs": {
+            // shadowing対応
+            // 外側の型代入が内側の型変数へ影響しないようにする
+            if (targetType.typeParams.includes(typeVarName)) {
+                return targetType;
+            }
+
             const substitutedType = substitute(targetType.type, typeVarName, concreteType);
             return typeAbs(targetType.typeParams, substitutedType);
         }
